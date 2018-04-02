@@ -9,6 +9,8 @@ public class SegurancaUtils {
     private String clientPfx;
     private String clientPassword;
     private String clientAlias;
+    private String erpLogin;
+    private String erpSenha;
 
     public static SegurancaUtils get() {
         if (instance == null) {
@@ -72,6 +74,34 @@ public class SegurancaUtils {
 
     public String getUrlSalvarStatusErp() {
         return null;
+    }
+    
+    public String getErpLogin() {
+        return erpLogin;
+    }
+    
+    public String getErpSenha() {
+        return erpSenha;
+    }
+
+    public void setClientAlias(String text) {
+        this.clientAlias = text;        
+    }
+
+    public void setClientPassword(String text) {
+        this.clientPassword = text;
+    }
+
+    public void setClientPfx(String text) {
+        this.clientPfx = text;
+    }
+
+    public void setERPLogin(String text) {
+        this.erpLogin = text;
+    }
+
+    public void setERPSenha(String text) {
+        this.erpSenha = text;
     }
 
 }
