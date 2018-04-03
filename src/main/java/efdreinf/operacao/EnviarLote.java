@@ -42,7 +42,7 @@ public class EnviarLote implements IOperacao {
         sb.append("<ReceberLoteEventos xmlns=\"http://sped.fazenda.gov.br/\">");
         sb.append("<loteEventos>");
 
-        sb.append("<Reinf xmlns=\"http://www.reinf.esocial.gov.br/schemas/envioLoteEventos/v1_02_00\">");
+        sb.append("<Reinf xmlns=\"http://www.reinf.esocial.gov.br/schemas/envioLoteEventos/v1_03_00\">");
         sb.append("<loteEventos>");
 
         // List<String> listaIds = entrada.getListaIds();

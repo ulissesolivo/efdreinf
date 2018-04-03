@@ -18,6 +18,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 
 import efdreinf.adapter.ArquivoLocalAdapter;
+import efdreinf.adapter.IBackendAdapter;
+import efdreinf.adapter.ServidorErpAdapter;
 import efdreinf.adapter.SoapAdapter;
 import efdreinf.operacao.EnviarLote;
 import efdreinf.util.SegurancaUtils;
@@ -93,6 +95,13 @@ public class JanelaMain extends JFrame {
         contentPane.add(panel2, BorderLayout.CENTER);
         contentPane.add(panel3, BorderLayout.PAGE_END);
 
+        try {
+            inicializar();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(JanelaMain.this, e.getMessage(), "Erro!", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
+
         setContentPane(contentPane);
         pack();
         toFront();
@@ -121,7 +130,7 @@ public class JanelaMain extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    iniciar();
+                    iniciarProcesso();
                     JOptionPane.showMessageDialog(JanelaMain.this, "Sincronizacao concluida!", "EFD Reinf", JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception e1) {
                     JOptionPane.showMessageDialog(JanelaMain.this, e1.getMessage(), "Erro!", JOptionPane.ERROR_MESSAGE);
@@ -143,21 +152,34 @@ public class JanelaMain extends JFrame {
         return btnPanel;
     }
 
-    protected void iniciar() throws Exception {
+    private void inicializar() throws Exception {
+        txtIdCertificado.setText(SegurancaUtils.get().getClientAlias());
+        txtSenhaCertificado.setText(SegurancaUtils.get().getClientPassword());
+        txtArquivoPFX.setText(SegurancaUtils.get().getClientPfx());
+        txtLoginERP.setText(SegurancaUtils.get().getERPLogin());
+        txtSenhaERP.setText(SegurancaUtils.get().getERPSenha());
+    }
+
+    protected void iniciarProcesso() throws Exception {
 
         SegurancaUtils.get().setClientAlias(txtIdCertificado.getText());
         SegurancaUtils.get().setClientPassword(txtSenhaCertificado.getText());
         SegurancaUtils.get().setClientPfx(txtArquivoPFX.getText());
         SegurancaUtils.get().setERPLogin(txtLoginERP.getText());
         SegurancaUtils.get().setERPSenha(txtSenhaERP.getText());
-
-        SegurancaUtils.get().inicializar();
+        
+        SegurancaUtils.get().inicializarCertificados();
 
         SoapAdapter soap = new SoapAdapter(//
                 "https://preprodefdreinf.receita.fazenda.gov.br/RecepcaoLoteReinf.svc", //
                 "http://sped.fazenda.gov.br/RecepcaoLoteReinf/ReceberLoteEventos");
 
-        ArquivoLocalAdapter entrada = new ArquivoLocalAdapter("xmlEventosTeste", "xmlResposta");
+        IBackendAdapter entrada;
+        if ("ERP".equals(SegurancaUtils.get().getModoIntegracao())) {
+            entrada = new ServidorErpAdapter();
+        } else {
+            entrada = new ArquivoLocalAdapter();
+        }
 
         EnviarLote enviarLote = new EnviarLote();
 

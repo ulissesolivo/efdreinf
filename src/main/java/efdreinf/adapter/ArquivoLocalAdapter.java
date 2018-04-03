@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import efdreinf.util.SegurancaUtils;
+
 public class ArquivoLocalAdapter implements IBackendAdapter {
 
     private String pastaDestino;
@@ -16,6 +18,11 @@ public class ArquivoLocalAdapter implements IBackendAdapter {
     public ArquivoLocalAdapter(String pastaOrigem, String pastaDestino) {
         this.pastaOrigem = pastaOrigem;
         this.pastaDestino = pastaDestino;
+    }
+
+    public ArquivoLocalAdapter() throws Exception {
+        this.pastaOrigem = SegurancaUtils.get().getPastaEnvioEventos();
+        this.pastaDestino = SegurancaUtils.get().getPastaLogs();
     }
 
     @Override

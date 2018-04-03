@@ -1,4 +1,4 @@
-package efdreinf.client;
+package efdreinf.batch;
 
 import efdreinf.adapter.ArquivoLocalAdapter;
 import efdreinf.adapter.SoapAdapter;
@@ -9,8 +9,8 @@ public class EnviaLoteMain {
 
     public static void main(String args[]) throws Exception {
 
-        SegurancaUtils.get().inicializar();
-
+        SegurancaUtils.get().inicializarCertificados();
+        
         SoapAdapter soap = new SoapAdapter(//
                 "https://preprodefdreinf.receita.fazenda.gov.br/RecepcaoLoteReinf.svc", //
                 "http://sped.fazenda.gov.br/RecepcaoLoteReinf/ReceberLoteEventos");
@@ -18,7 +18,7 @@ public class EnviaLoteMain {
         ArquivoLocalAdapter entrada = new ArquivoLocalAdapter("xmlEventosTeste", "xmlResposta");
 
         EnviarLote enviarLote = new EnviarLote();
-        
+
         enviarLote.processar(entrada, soap);
     }
 

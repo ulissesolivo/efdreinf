@@ -5,18 +5,21 @@ import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
 import java.net.URL;
 
+import javax.net.ssl.HttpsURLConnection;
+
 import efdreinf.util.InputStreamUtils;
+import efdreinf.util.SegurancaUtils;
 
 public class SoapAdapter implements IServidorRemotoAdapter {
 
-    private HttpURLConnection connection;
+    private HttpsURLConnection connection;
 
     public SoapAdapter(String url, String soapAction) throws Exception {
         URL uurl = new URL(url);
-        connection = HttpURLConnection.class.cast(uurl.openConnection());
+        connection = HttpsURLConnection.class.cast(uurl.openConnection());
+        connection.setSSLSocketFactory(SegurancaUtils.get().getSslSocketFactory());
         if (soapAction != null && !soapAction.isEmpty()) {
             connection.setRequestProperty("SOAPAction", soapAction);
         }

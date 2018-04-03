@@ -1,4 +1,4 @@
-package efdreinf.client;
+package efdreinf.batch;
 
 import efdreinf.adapter.ArquivoLocalAdapter;
 import efdreinf.adapter.SoapAdapter;
@@ -9,8 +9,8 @@ public class ConsultaReinfMain {
 
     public static void main(String args[]) throws Exception {
 
-        SegurancaUtils.get().inicializar();
-
+        SegurancaUtils.get().inicializarCertificados();
+        
         SoapAdapter soap = new SoapAdapter(//
                 "https://preprodefdreinf.receita.fazenda.gov.br/ConsultasReinf.svc", //
                 "http://sped.fazenda.gov.br/ConsultasReinf/ConsultaInformacoesConsolidadas");

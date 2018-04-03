@@ -1,8 +1,6 @@
 package efdreinf.util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.KeyStore;
@@ -39,22 +37,9 @@ public class AssinadorDigital {
     private KeyStore.PrivateKeyEntry keyEntry;
 
     public AssinadorDigital() throws Exception {
-        InputStream entrada = new FileInputStream(SegurancaUtils.get().getClientPfx());
-
-        KeyStore ks = KeyStore.getInstance("pkcs12");
-        char[] senha = SegurancaUtils.get().getClientPassword().toCharArray();
-
+        KeyStore ks = SegurancaUtils.get().getKeyStore();
         String clientAlias = SegurancaUtils.get().getClientAlias();
-
-        try {
-            ks.load(entrada, senha);
-
-            if (ks.getEntry(clientAlias, new KeyStore.PasswordProtection(senha)) == null) {
-                throw new Exception("Alias existe?");
-            }
-        } catch (IOException e) {
-            throw new Exception("Senha do Certificado Digital incorreta ou Certificado inválido.");
-        }
+        char[] senha = SegurancaUtils.get().getClientPassword().toCharArray();
         keyEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(clientAlias, new KeyStore.PasswordProtection(senha));
     }
 

@@ -1,4 +1,4 @@
-<Reinf xmlns="http://www.reinf.esocial.gov.br/schemas/evtInfoContribuinte/v1_02_00">
+<Reinf xmlns="http://www.reinf.esocial.gov.br/schemas/evtInfoContribuinte/v1_03_00">
   <evtInfoContri id="ID1123456789012342017112320300100001">
   <ideEvento>
     <tpAmb>3</tpAmb>
