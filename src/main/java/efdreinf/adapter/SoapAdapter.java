@@ -5,21 +5,30 @@ import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
+
+import org.apache.log4j.Logger;
 
 import efdreinf.util.InputStreamUtils;
 import efdreinf.util.SegurancaUtils;
 
 public class SoapAdapter implements IServidorRemotoAdapter {
 
-    private HttpsURLConnection connection;
+    public static final Logger LOGGER = Logger.getLogger(SoapAdapter.class);
+
+    private HttpURLConnection connection;
 
     public SoapAdapter(String url, String soapAction) throws Exception {
+        LOGGER.info("Acessando " + url);
         URL uurl = new URL(url);
-        connection = HttpsURLConnection.class.cast(uurl.openConnection());
-        connection.setSSLSocketFactory(SegurancaUtils.get().getSslSocketFactory());
+        connection = HttpURLConnection.class.cast(uurl.openConnection());
+        if (url.startsWith("https")) {
+            HttpsURLConnection httpsURLConnection = HttpsURLConnection.class.cast(connection);
+            httpsURLConnection.setSSLSocketFactory(SegurancaUtils.get().getSslSocketFactory());
+        }
         if (soapAction != null && !soapAction.isEmpty()) {
             connection.setRequestProperty("SOAPAction", soapAction);
         }

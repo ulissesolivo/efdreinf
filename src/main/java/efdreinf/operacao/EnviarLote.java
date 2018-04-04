@@ -10,14 +10,20 @@ import efdreinf.util.AssinadorDigital;
 
 public class EnviarLote implements IOperacao {
 
+    private AssinadorDigital assinador;
+
+    public EnviarLote(AssinadorDigital assinador) {
+        this.assinador = assinador;
+    }
+
     @Override
     public void processar(IBackendAdapter backend, IServidorRemotoAdapter destino) throws Exception {
 
-        List<String> listaIds = backend.getListaIds();
-        
+        List<String> listaIds = backend.consultarListaIds();
+
         for (String id : listaIds) {
-            
-            InputStream arquivo = backend.getArquivo(id);
+
+            InputStream arquivo = backend.obterArquivo(id);
 
             String mensagem = montarMensagem(arquivo);
 
@@ -26,16 +32,14 @@ public class EnviarLote implements IOperacao {
             String resposta = destino.lerResposta();
 
             destino.desconectar();
-            
-            backend.guardarResposta(id, resposta);
+
+            backend.guardarStatusRetorno(id, resposta);
 
         }
-        
+
     }
 
-    public static String montarMensagem(InputStream arquivo) throws Exception {
-
-        AssinadorDigital assinador = new AssinadorDigital();
+    public String montarMensagem(InputStream arquivo) throws Exception {
 
         StringBuilder sb = new StringBuilder();
 

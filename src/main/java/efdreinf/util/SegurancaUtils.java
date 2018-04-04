@@ -19,15 +19,13 @@ public class SegurancaUtils {
 
     private SSLSocketFactory sslSocketFactory = null;
     private KeyStore keyStore;
-    
+
+    private String urlServicoReinf;
     private String clientPfx;
     private String clientPassword;
     private String clientAlias;
-    private String erpLogin;
-    private String erpSenha;
-    private String urlListaEventosNaoEnviadosReinf;
-    private String urlObterEventoReinf;
-    private String urlSalvarStatusErp;
+    private String erpLoginSenha;
+    private String urlServicoErp;
     private String modoIntegracao;
 
     private String pastaEnvioEventos;
@@ -44,17 +42,16 @@ public class SegurancaUtils {
     public SegurancaUtils() throws Exception {
         Properties props = new Properties();
         props.load(new FileInputStream("configuracoes.properties"));
+        
+        urlServicoReinf = props.getProperty("efdreinf.urlServicoReinf");
 
         clientPfx = props.getProperty("efdreinf.clientPfx");
         clientPassword = props.getProperty("efdreinf.clientPassword");
         clientAlias = props.getProperty("efdreinf.clientAlias");
 
-        urlListaEventosNaoEnviadosReinf = props.getProperty("efdreinf.urlListaEventosNaoEnviadosReinf");
-        urlObterEventoReinf = props.getProperty("efdreinf.urlObterEventoReinf");
-        urlSalvarStatusErp = props.getProperty("efdreinf.urlSalvarStatusErp");
-        erpLogin = props.getProperty("efdreinf.erpLogin");
-        erpSenha = props.getProperty("efdreinf.erpSenha");
-        
+        urlServicoErp = props.getProperty("efdreinf.urlServicoERP");
+        erpLoginSenha = props.getProperty("efdreinf.erpLoginSenha");
+
         modoIntegracao = props.getProperty("efdreinf.modoIntegracao");
 
         pastaEnvioEventos = props.getProperty("efdreinf.pastaEnvioEventos");
@@ -78,20 +75,20 @@ public class SegurancaUtils {
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
         keyStore = KeyStore.getInstance("PKCS12");
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
         try {
             keyStore.load(new FileInputStream(clientPfx), senha);
+            kmf.init(keyStore, senha);
         } catch (IOException e) {
             throw new Exception("Senha do Certificado Digital incorreta ou Certificado inválido.");
         }
-
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(keyStore, senha);
 
         KeyStore trustStore = KeyStore.getInstance("JKS");
         trustStore.load(null, null);
 
         File[] arquivosCerts = new File("cacerts").listFiles();
+
         for (int i = 0; i < arquivosCerts.length; i++) {
             File file = arquivosCerts[i];
             trustStore.setCertificateEntry(String.valueOf(i), cf.generateCertificate(new FileInputStream(file)));
@@ -100,8 +97,7 @@ public class SegurancaUtils {
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(trustStore);
 
-        SSLContext sslContext = null;
-        sslContext = SSLContext.getInstance("TLS");
+        SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
 
         sslSocketFactory = sslContext.getSocketFactory();
@@ -109,6 +105,10 @@ public class SegurancaUtils {
 
     public KeyStore getKeyStore() throws Exception {
         return keyStore;
+    }
+    
+    public String getUrlServicoReinf() {
+        return urlServicoReinf;
     }
 
     public SSLSocketFactory getSslSocketFactory() {
@@ -127,24 +127,12 @@ public class SegurancaUtils {
         return clientAlias;
     }
 
-    public String getUrlListaEventosNaoEnviadosReinf() {
-        return urlListaEventosNaoEnviadosReinf;
-    }
-
-    public String getUrlObterEventoReinf() {
-        return urlObterEventoReinf;
-    }
-
-    public String getUrlSalvarStatusErp() {
-        return urlSalvarStatusErp;
+    public String getUrlServicoErp() {
+        return urlServicoErp;
     }
 
     public String getErpLogin() {
-        return erpLogin;
-    }
-
-    public String getErpSenha() {
-        return erpSenha;
+        return erpLoginSenha;
     }
 
     public void setClientAlias(String text) {
@@ -159,32 +147,32 @@ public class SegurancaUtils {
         this.clientPfx = text;
     }
 
-    public void setERPLogin(String text) {
-        this.erpLogin = text;
+    public void setERPLoginSenha(String text) {
+        this.erpLoginSenha = text;
     }
 
-    public void setERPSenha(String text) {
-        this.erpSenha = text;
+    public String getERPLoginSenha() {
+        return erpLoginSenha;
     }
 
-    public String getERPLogin() {
-        return erpLogin;
-    }
-
-    public String getERPSenha() {
-        return erpSenha;
-    }
-    
     public String getModoIntegracao() {
         return modoIntegracao;
     }
-    
+
     public String getPastaEnvioEventos() {
         return pastaEnvioEventos;
     }
-    
+
     public String getPastaLogs() {
         return pastaLogs;
+    }
+
+    public void setServicoErp(String string) {
+        this.urlServicoErp = string;
+    }
+    
+    public void setUrlServicoReinf(String urlServicoReinf) {
+        this.urlServicoReinf = urlServicoReinf;
     }
 
 }

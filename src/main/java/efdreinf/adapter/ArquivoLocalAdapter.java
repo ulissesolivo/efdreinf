@@ -8,9 +8,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import efdreinf.util.SegurancaUtils;
 
 public class ArquivoLocalAdapter implements IBackendAdapter {
+
+    public static final Logger LOGGER = Logger.getLogger(ArquivoLocalAdapter.class);
 
     private String pastaDestino;
     private String pastaOrigem;
@@ -26,7 +30,8 @@ public class ArquivoLocalAdapter implements IBackendAdapter {
     }
 
     @Override
-    public List<String> getListaIds() {
+    public List<String> consultarListaIds() {
+        LOGGER.info("Buscando arquivos XML na pasta " + pastaOrigem);
         File[] arquivosEventos = new File(pastaOrigem).listFiles(new FileFilter() {
             @Override
             public boolean accept(File f) {
@@ -39,19 +44,24 @@ public class ArquivoLocalAdapter implements IBackendAdapter {
             ids.add(file.getName().replaceAll(".xml", ""));
         }
 
+        LOGGER.info("Arquivos encontrados: " + ids.size());
+
         return ids;
     }
 
     @Override
-    public InputStream getArquivo(String id) throws Exception {
+    public InputStream obterArquivo(String id) throws Exception {
         File file = new File(pastaOrigem + "/" + id + ".xml");
+        LOGGER.info("Lendo arquivo: " + file.getName());
         FileInputStream fileInputStream = new FileInputStream(file);
         return fileInputStream;
     }
 
     @Override
-    public void guardarResposta(String id, String conteudo) throws Exception {
-        FileOutputStream fos = new FileOutputStream(pastaDestino + "/" + id + ".xml");
+    public void guardarStatusRetorno(String id, String conteudo) throws Exception {
+        String filename = pastaDestino + "/" + id + ".xml";
+        LOGGER.info("Salvando arquivo: " + filename);
+        FileOutputStream fos = new FileOutputStream(filename);
         fos.write(conteudo.getBytes());
         fos.close();
     }

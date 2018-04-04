@@ -5,10 +5,10 @@ import java.util.List;
 
 public interface IBackendAdapter {
 
-    public List<String> getListaIds() throws Exception;
+    public List<String> consultarListaIds() throws Exception;
 
-    public InputStream getArquivo(String id) throws Exception;
+    public InputStream obterArquivo(String id) throws Exception;
 
-    public void guardarResposta(String id, String resposta) throws Exception;
+    public void guardarStatusRetorno(String id, String resposta) throws Exception;
 
 }

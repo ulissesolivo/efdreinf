@@ -3,15 +3,18 @@ package efdreinf.util;
 import java.io.ByteArrayInputStream;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import efdreinf.util.ArquivoAssinado;
-import efdreinf.util.AssinadorDigital;
-
 public class AssinadorDigitalTest {
-
+    
     @Test
+    @Ignore //requer PFX real
     public void assinaturaTest() throws Exception {
+        SegurancaUtils.get().setClientPfx("");  
+        SegurancaUtils.get().setClientAlias("");
+        SegurancaUtils.get().setClientPassword("");
+
         String conteudoXml = //
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" //
                         + "<Reinf xmlns=\"http://www.reinf.esocial.gov.br/schemas/NOME_DO_EVENTO/v01_01_01\">" //

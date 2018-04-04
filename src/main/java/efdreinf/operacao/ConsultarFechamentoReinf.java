@@ -14,7 +14,7 @@ public class ConsultarFechamentoReinf implements IOperacao {
 
         String resposta = destino.lerResposta();
 
-        entrada.guardarResposta("", resposta);
+        entrada.guardarStatusRetorno("", resposta);
 
         destino.desconectar();
     }

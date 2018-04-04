@@ -37,6 +37,10 @@ public class AssinadorDigital {
     private KeyStore.PrivateKeyEntry keyEntry;
 
     public AssinadorDigital() throws Exception {
+        preparaCertificado();
+    }
+
+    protected void preparaCertificado() throws Exception {
         KeyStore ks = SegurancaUtils.get().getKeyStore();
         String clientAlias = SegurancaUtils.get().getClientAlias();
         char[] senha = SegurancaUtils.get().getClientPassword().toCharArray();
