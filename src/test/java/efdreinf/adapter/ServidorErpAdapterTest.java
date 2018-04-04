@@ -16,8 +16,8 @@ import efdreinf.util.SegurancaUtils;
 
 public class ServidorErpAdapterTest {
 
+    private StubHttpConnection stubHttpConnection;
     private String resposta;
-    private String url;
     private TestServAdapter adapter = new TestServAdapter();
     
     public ServidorErpAdapterTest() throws Exception {
@@ -29,7 +29,7 @@ public class ServidorErpAdapterTest {
         resposta = "{\"listaIds\":[\"ID001\",\"ID002\"]}";
         List<String> lista = adapter.consultarListaIds();
         Assert.assertEquals("[ID001, ID002]", lista.toString());
-        Assert.assertTrue(url.endsWith("&op=L"));
+        Assert.assertEquals("L", stubHttpConnection.getRequestProperty("op"));        
     }
 
     @Test
@@ -38,22 +38,24 @@ public class ServidorErpAdapterTest {
         InputStream streamResp = adapter.obterArquivo("ID001");
         String string = InputStreamUtils.inputStreamToString(streamResp);
         Assert.assertEquals("<xml>teste</xml>", string);
-        Assert.assertTrue(url.endsWith("&op=C&id=ID001"));
+        Assert.assertEquals("C", stubHttpConnection.getRequestProperty("op"));        
+        Assert.assertEquals("ID001", stubHttpConnection.getRequestProperty("id"));        
     }
 
     @Test
     public void atualizarItem() throws Exception {
         resposta = "<xml>teste</xml>";
         adapter.guardarStatusRetorno("ID001", "<xml>retorno</xml>");
-        Assert.assertTrue(url.endsWith("&op=A&id=ID001"));
+        Assert.assertEquals("A", stubHttpConnection.getRequestProperty("op"));        
+        Assert.assertEquals("ID001", stubHttpConnection.getRequestProperty("id"));        
     }
 
     private class TestServAdapter extends ServidorErpAdapter {
 
         @Override
         protected HttpURLConnection abreConexao(String url) throws MalformedURLException, IOException, Exception {
-            ServidorErpAdapterTest.this.url = url;
-            return new StubHttpConnection(new URL(url));
+            stubHttpConnection = new StubHttpConnection(new URL(url));
+            return stubHttpConnection;
         }
 
     }

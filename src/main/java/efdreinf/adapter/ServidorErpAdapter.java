@@ -2,12 +2,10 @@ package efdreinf.adapter;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Base64;
@@ -25,8 +23,7 @@ public class ServidorErpAdapter implements IBackendAdapter {
     @Override
     public List<String> consultarListaIds() throws Exception {
         LOGGER.info("Obtendo lista IDs do ERP...");
-        String url = SegurancaUtils.get().getUrlServicoErp() + "&op=L";
-        String listaEventos = getRespostaHttp(url);
+        String listaEventos = getRespostaHttp(SegurancaUtils.get().getUrlServicoErp(), "L", "");
         String[] split = //
                 listaEventos.substring(listaEventos.indexOf("["), listaEventos.indexOf("]")) //
                 .replaceAll("[^A-Z\\d,]", "") //
@@ -38,7 +35,7 @@ public class ServidorErpAdapter implements IBackendAdapter {
     public InputStream obterArquivo(String id) throws Exception {
         LOGGER.info("Baixando arquivo do ERP: " + id);
         String url = SegurancaUtils.get().getUrlServicoErp() + "&op=C&id=" + id;
-        String arquivo = getRespostaHttp(url);
+        String arquivo = getRespostaHttp(url, "C", id);
         return InputStreamUtils.stringToInputStream(arquivo);
     }
 
@@ -46,13 +43,13 @@ public class ServidorErpAdapter implements IBackendAdapter {
     public void guardarStatusRetorno(String id, String retorno) throws Exception {
         LOGGER.info("Gravando arquivo no ERP: " + id);
         
-        String url = SegurancaUtils.get().getUrlServicoErp() + "&op=A&id=" + id;
-
-        HttpURLConnection connection = abreConexao(url);
+        HttpURLConnection connection = abreConexao(SegurancaUtils.get().getUrlServicoErp());
 
         connection.setDoOutput(true);
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "text/xml; charset=utf-8");
+        connection.setRequestProperty("op", "A");
+        connection.setRequestProperty("id", id);
 
         OutputStream outputStream = connection.getOutputStream();
 
@@ -69,17 +66,19 @@ public class ServidorErpAdapter implements IBackendAdapter {
         connection.disconnect();
     }
 
-    protected String getRespostaHttp(String url) throws Exception {
+    protected String getRespostaHttp(String url, String op, String id) throws Exception {
         HttpURLConnection connection = abreConexao(url);
         connection.setRequestMethod("GET");
         InputStream respostaStream = connection.getInputStream();
         String resposta = InputStreamUtils.inputStreamToString(respostaStream);
         respostaStream.close();
         connection.disconnect();
+        connection.setRequestProperty("op", op);
+        connection.setRequestProperty("id", id);
         return resposta;
     }
 
-    protected HttpURLConnection abreConexao(String url) throws MalformedURLException, IOException, Exception {
+    protected HttpURLConnection abreConexao(String url) throws Exception {
         URL uurl = new URL(url);
         HttpURLConnection connection = HttpURLConnection.class.cast(uurl.openConnection());
         byte[] login = SegurancaUtils.get().getErpLogin().getBytes();
