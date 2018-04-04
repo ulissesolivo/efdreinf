@@ -29,6 +29,8 @@ import efdreinf.util.SegurancaUtils;
 
 public class JanelaMain extends JFrame {
 
+    private static final String TITULO = "Sincronizador ERP x EFD-Reinf";
+
     private static final long serialVersionUID = -7362159179640950148L;
 
     public static final Logger LOGGER = Logger.getLogger(JanelaMain.class);
@@ -40,11 +42,12 @@ public class JanelaMain extends JFrame {
     private JTextField txtSenhaCertificado;
 
     public static void main(String[] args) {
+        LOGGER.info(TITULO);
         new JanelaMain();
     }
 
     public JanelaMain() {
-        super("Sincronizador ERP x EFD-Reinf");
+        super(TITULO);
 
         setBounds(320, 240, 640, 480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

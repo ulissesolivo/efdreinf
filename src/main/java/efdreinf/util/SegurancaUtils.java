@@ -13,7 +13,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.apache.log4j.Logger;
+
 public class SegurancaUtils {
+    
+    public static final Logger LOGGER = Logger.getLogger(SegurancaUtils.class);
 
     private static SegurancaUtils instance;
 
@@ -40,6 +44,8 @@ public class SegurancaUtils {
     }
 
     public SegurancaUtils() throws Exception {
+        LOGGER.info("Lendo configuracoes.properties...");
+        
         Properties props = new Properties();
         props.load(new FileInputStream("configuracoes.properties"));
         
@@ -67,6 +73,9 @@ public class SegurancaUtils {
         if (sslSocketFactory != null) {
             return;
         }
+        
+        LOGGER.info("Inicializando certificados digitais...");
+        
         if (clientPfx == null || clientAlias == null || clientPassword == null) {
             throw new UnsupportedOperationException("Dados do certificado digital nao informados!");
         }
@@ -78,6 +87,7 @@ public class SegurancaUtils {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
         try {
+            LOGGER.info("Certificado cliente: " + clientPfx);
             keyStore.load(new FileInputStream(clientPfx), senha);
             kmf.init(keyStore, senha);
         } catch (IOException e) {
@@ -91,6 +101,7 @@ public class SegurancaUtils {
 
         for (int i = 0; i < arquivosCerts.length; i++) {
             File file = arquivosCerts[i];
+            LOGGER.info("Certificado servidor: " + file.getName());
             trustStore.setCertificateEntry(String.valueOf(i), cf.generateCertificate(new FileInputStream(file)));
         }
 
