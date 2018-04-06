@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -13,18 +14,15 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.filechooser.FileSystemView;
 
 import org.apache.log4j.Logger;
 
-import efdreinf.adapter.ArquivoLocalAdapter;
-import efdreinf.adapter.IBackendAdapter;
-import efdreinf.adapter.ServidorErpAdapter;
-import efdreinf.adapter.SoapAdapter;
-import efdreinf.operacao.EnviarLote;
-import efdreinf.util.AssinadorDigital;
+import efdreinf.batch.BatchEnviaLoteMain;
 import efdreinf.util.SegurancaUtils;
 
 public class JanelaMain extends JFrame {
@@ -40,6 +38,14 @@ public class JanelaMain extends JFrame {
     private JTextField txtArquivoPFX;
     private JTextField txtIdCertificado;
     private JTextField txtSenhaCertificado;
+    private JTextField txtPastaEnvio;
+    private JTextField txtPastaLogs;
+
+    private JRadioButton radioErp;
+    private JRadioButton radioFile;
+    private JButton btnSelecaoPastaEvento;
+    private JLabel lblPastaEventos;
+    private JLabel lblUsuarioSenha;
 
     public static void main(String[] args) {
         LOGGER.info(TITULO);
@@ -53,31 +59,15 @@ public class JanelaMain extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel contentPane = new JPanel();
-        contentPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        contentPane.setLayout(new BorderLayout(5, 5));
+        contentPane.setBorder(BorderFactory.createEmptyBorder(15, 15, 5, 5));
+        contentPane.setLayout(new BorderLayout(15, 15));
 
-        JPanel panel1 = makePanel("Certificado Digital", 3);
+        JPanel panel1 = makePanel("Certificado Digital");
         panel1.add(new JLabel("Certificado PFX:"));
 
         txtArquivoPFX = new JTextField("");
-
-        JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Arquivo de certificado digital (PFX)", "pfx");
-        fileChooser.setFileFilter(filter);
-
-        JButton button = new JButton("Arquivo...");
-
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent evt) {
-                if (fileChooser.showOpenDialog(JanelaMain.this) == JFileChooser.APPROVE_OPTION) {
-                    txtArquivoPFX.setText(fileChooser.getSelectedFile().getAbsolutePath());
-                }
-            }
-        });
-
         panel1.add(txtArquivoPFX);
-        panel1.add(button);
+        panel1.add(criaBotaoSelecaoArquivo());
 
         panel1.add(new JLabel("ID e Senha:"));
 
@@ -87,15 +77,42 @@ public class JanelaMain extends JFrame {
         txtSenhaCertificado = new JPasswordField("");
         panel1.add(txtSenhaCertificado);
 
-        JPanel panel2 = makePanel("Acesso ERP", 3);
-        panel2.add(new JLabel("Usuário e Senha:"));
+        JPanel panel2 = makePanel("Fonte de dados");
 
+        panel2.add(new JLabel("Fonte de dados:"));
+        radioErp = new JRadioButton("ERP");
+        radioFile = new JRadioButton("Arquivo");
+        ButtonGroup radiogroup = new ButtonGroup();
+        radiogroup.add(radioErp);
+        radiogroup.add(radioFile);
+        panel2.add(radioErp);
+        panel2.add(radioFile);
+
+        lblUsuarioSenha = new JLabel("Usuario e Senha:");
+        panel2.add(lblUsuarioSenha);
         txtLoginERP = new JTextField("");
         panel2.add(txtLoginERP);
-
         txtSenhaERP = new JPasswordField("");
         panel2.add(txtSenhaERP);
         contentPane.add(panel2);
+
+        lblPastaEventos = new JLabel("Pasta Eventos XML:");
+        panel2.add(lblPastaEventos);
+        txtPastaEnvio = new JTextField("");
+        panel2.add(txtPastaEnvio);
+        btnSelecaoPastaEvento = criaBotaoSelecaoPasta(txtPastaEnvio);
+        panel2.add(btnSelecaoPastaEvento);
+
+        JLabel lblPastaLogs = new JLabel("Pasta Logs:");
+        panel2.add(lblPastaLogs);
+        txtPastaLogs = new JTextField("");
+        panel2.add(txtPastaLogs);
+        JButton btnSelecaoPastaLogs = criaBotaoSelecaoPasta(txtPastaLogs);
+        panel2.add(btnSelecaoPastaLogs);
+
+        ActionListener actionMudaFonteDados = criaActionAtualizaRadio();
+        radioErp.addActionListener(actionMudaFonteDados);
+        radioFile.addActionListener(actionMudaFonteDados);
 
         JPanel panel3 = createButtons();
 
@@ -107,8 +124,10 @@ public class JanelaMain extends JFrame {
             inicializar();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(JanelaMain.this, e.getMessage(), "Erro!", JOptionPane.ERROR_MESSAGE);
-            LOGGER.error(e);
+            LOGGER.error("Problema ao iniciar o aplicativo!", e);
         }
+
+        atualizaCamposFonteDados();
 
         setContentPane(contentPane);
         pack();
@@ -118,9 +137,65 @@ public class JanelaMain extends JFrame {
 
     }
 
-    protected JPanel makePanel(String titulo, int itensHorizontais) {
+    private ActionListener criaActionAtualizaRadio() {
+        ActionListener actionMudaFonteDados = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                atualizaCamposFonteDados();
+            }
+        };
+        return actionMudaFonteDados;
+    }
+
+    private void atualizaCamposFonteDados() {
+        boolean isErp = radioErp.isSelected();
+        txtLoginERP.setVisible(isErp);
+        txtSenhaERP.setVisible(isErp);
+        lblUsuarioSenha.setVisible(isErp);
+        txtPastaEnvio.setVisible(!isErp);
+        btnSelecaoPastaEvento.setVisible(!isErp);
+        lblPastaEventos.setVisible(!isErp);
+    }
+
+    private JButton criaBotaoSelecaoPasta(final JTextField txtfield) {
+        final JFileChooser fc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+        JButton btn = new JButton("Pasta...", UIManager.getIcon("FileView.directoryIcon"));
+        btn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                if (fc.showOpenDialog(JanelaMain.this) == JFileChooser.APPROVE_OPTION) {
+                    txtfield.setText(fc.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
+
+        return btn;
+    }
+
+    private JButton criaBotaoSelecaoArquivo() {
+        final JFileChooser fc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Arquivo de certificado digital (PFX)", "pfx");
+        fc.setFileFilter(filter);
+
+        JButton btn = new JButton("Arquivo...", UIManager.getIcon("FileView.fileIcon"));
+        btn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent evt) {
+                if (fc.showOpenDialog(JanelaMain.this) == JFileChooser.APPROVE_OPTION) {
+                    txtArquivoPFX.setText(fc.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
+
+        return btn;
+    }
+
+    protected JPanel makePanel(String titulo) {
         JPanel panel = new JPanel(false);
-        GridLayout layout = new GridLayout(0, itensHorizontais);
+        GridLayout layout = new GridLayout(0, 3);
         layout.setHgap(10);
         layout.setVgap(2);
         panel.setLayout(layout);
@@ -131,18 +206,19 @@ public class JanelaMain extends JFrame {
     }
 
     private JPanel createButtons() {
-        JPanel btnPanel = makePanel("", 2);
+        JPanel btnPanel = makePanel("");
+        btnPanel.add(new JLabel());
 
-        JButton btn1 = new JButton("Processar");
+        JButton btn1 = new JButton("Processar lotes", UIManager.getIcon("FileChooser.listViewIcon"));
         btn1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    iniciarProcesso();
+                    processar();
                     JOptionPane.showMessageDialog(JanelaMain.this, "Sincronizacao concluida!", "EFD Reinf", JOptionPane.INFORMATION_MESSAGE);
                 } catch (Exception e1) {
                     JOptionPane.showMessageDialog(JanelaMain.this, e1.getMessage(), "Erro!", JOptionPane.ERROR_MESSAGE);
-                    LOGGER.error(e1);
+                    LOGGER.error("Erro durante a sincronizacao!", e1);
                 }
             }
         });
@@ -160,10 +236,16 @@ public class JanelaMain extends JFrame {
         return btnPanel;
     }
 
-    private void inicializar() throws Exception {
+    private void inicializar() {
         txtIdCertificado.setText(SegurancaUtils.get().getClientAlias());
         txtSenhaCertificado.setText(SegurancaUtils.get().getClientPassword());
         txtArquivoPFX.setText(SegurancaUtils.get().getClientPfx());
+        txtPastaEnvio.setText(SegurancaUtils.get().getPastaEnvioEventos());
+        txtPastaLogs.setText(SegurancaUtils.get().getPastaLogs());
+
+        boolean isErp = "ERP".equals(SegurancaUtils.get().getModoIntegracao());
+        radioErp.setSelected(isErp);
+        radioFile.setSelected(!isErp);
 
         String erpLoginSenha = SegurancaUtils.get().getERPLoginSenha();
         if (erpLoginSenha != null && erpLoginSenha.contains(":")) {
@@ -173,35 +255,17 @@ public class JanelaMain extends JFrame {
         }
     }
 
-    protected void iniciarProcesso() throws Exception {
+    protected void processar() throws Exception {
 
         SegurancaUtils.get().setClientAlias(txtIdCertificado.getText());
         SegurancaUtils.get().setClientPassword(txtSenhaCertificado.getText());
         SegurancaUtils.get().setClientPfx(txtArquivoPFX.getText());
         SegurancaUtils.get().setERPLoginSenha(txtLoginERP.getText() + ":" + txtSenhaERP.getText());
-        
-        SegurancaUtils.get().inicializarCertificados();
+        SegurancaUtils.get().setModoIntegracao(radioErp.isSelected() ? "ERP" : "FILE");
+        SegurancaUtils.get().setPastaEnvioEventos(txtPastaEnvio.getText());
+        SegurancaUtils.get().setPastaLogs(txtPastaLogs.getText());
 
-        LOGGER.info("Iniciando sincronizacao EFD Reinf x ERP...");
-
-        SoapAdapter soap = new SoapAdapter(//
-                SegurancaUtils.get().getUrlServicoReinf(), //
-                "http://sped.fazenda.gov.br/RecepcaoLoteReinf/ReceberLoteEventos");
-
-        IBackendAdapter entrada;
-        if ("ERP".equals(SegurancaUtils.get().getModoIntegracao())) {
-            entrada = new ServidorErpAdapter();
-        } else {
-            entrada = new ArquivoLocalAdapter();
-        }
-
-        AssinadorDigital assinador = new AssinadorDigital();
-
-        EnviarLote enviarLote = new EnviarLote(assinador);
-
-        enviarLote.processar(entrada, soap);
-        
-        LOGGER.info("Processamento concluido");
+        new BatchEnviaLoteMain().processar();
     }
 
 }

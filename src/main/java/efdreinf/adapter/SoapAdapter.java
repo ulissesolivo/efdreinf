@@ -19,12 +19,19 @@ public class SoapAdapter implements IServidorRemotoAdapter {
 
     public static final Logger LOGGER = Logger.getLogger(SoapAdapter.class);
 
-    private HttpURLConnection connection;
+    private String url;
+    private String soapAction;
 
-    public SoapAdapter(String url, String soapAction) throws Exception {
+    public SoapAdapter(String url, String soapAction) {
+        this.url = url;
+        this.soapAction = soapAction;
+    }
+
+    public String enviar(String mensagem) throws Exception {
         LOGGER.info("Acessando " + url);
+
         URL uurl = new URL(url);
-        connection = HttpURLConnection.class.cast(uurl.openConnection());
+        HttpURLConnection connection = HttpURLConnection.class.cast(uurl.openConnection());
         if (url.startsWith("https")) {
             HttpsURLConnection httpsURLConnection = HttpsURLConnection.class.cast(connection);
             httpsURLConnection.setSSLSocketFactory(SegurancaUtils.get().getSslSocketFactory());
@@ -32,9 +39,7 @@ public class SoapAdapter implements IServidorRemotoAdapter {
         if (soapAction != null && !soapAction.isEmpty()) {
             connection.setRequestProperty("SOAPAction", soapAction);
         }
-    }
 
-    public void enviar(String mensagem) throws Exception {
         connection.setDoOutput(true);
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "text/xml; charset=utf-8");
@@ -56,17 +61,14 @@ public class SoapAdapter implements IServidorRemotoAdapter {
         writer.close();
         out.close();
         outputStream.close();
-    }
 
-    public String lerResposta() throws Exception {
         InputStream respostaStream = connection.getInputStream();
         String resposta = InputStreamUtils.inputStreamToString(respostaStream);
         respostaStream.close();
-        return resposta;
-    }
 
-    public void desconectar() {
         connection.disconnect();
+
+        return resposta;
     }
 
 }

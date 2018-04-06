@@ -3,6 +3,7 @@ package efdreinf.util;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -44,7 +45,12 @@ public class AssinadorDigital {
         KeyStore ks = SegurancaUtils.get().getKeyStore();
         String clientAlias = SegurancaUtils.get().getClientAlias();
         char[] senha = SegurancaUtils.get().getClientPassword().toCharArray();
-        keyEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(clientAlias, new KeyStore.PasswordProtection(senha));
+        
+        try {
+            keyEntry = (KeyStore.PrivateKeyEntry) ks.getEntry(clientAlias, new KeyStore.PasswordProtection(senha));
+        } catch (Exception e) {
+            throw new Exception("Falha no Certificado Digital!", e);
+        }
     }
 
     public ArquivoAssinado assinar(String tagName, InputStream inArquivoXml) throws Exception {
@@ -93,6 +99,10 @@ public class AssinadorDigital {
         // faltou esse flag
         childNode.setIdAttribute("id", true);
 
+        if (keyEntry == null) {
+            throw new InvalidKeyException("ID incorreto do certificado digital!");
+        }
+        
         DOMSignContext dsc = new DOMSignContext(keyEntry.getPrivateKey(), rootItem);
 
         // Assembling the XML Signature

@@ -10,13 +10,10 @@ public class ReceberLoteEventosRawClient {
 
         System.out.println(" ### Conectado! ###");
 
-        soap.enviar("<ns2:ReceberLoteEventos xmlns:ns2=\"http://sped.fazenda.gov.br/\"><loteEventos>outro lote de eventos</loteEventos></ns2:ReceberLoteEventos>");
-
-        String resposta = soap.lerResposta();
+        String resposta = //
+                soap.enviar("<ns2:ReceberLoteEventos xmlns:ns2=\"http://sped.fazenda.gov.br/\"><loteEventos>outro lote de eventos</loteEventos></ns2:ReceberLoteEventos>");
 
         System.out.println(resposta);
-
-        soap.desconectar();
 
     }
 

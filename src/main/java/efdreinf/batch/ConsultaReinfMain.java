@@ -10,7 +10,7 @@ public class ConsultaReinfMain {
     public static void main(String args[]) throws Exception {
 
         SegurancaUtils.get().inicializarCertificados();
-        
+
         SoapAdapter soap = new SoapAdapter(//
                 "https://preprodefdreinf.receita.fazenda.gov.br/ConsultasReinf.svc", //
                 "http://sped.fazenda.gov.br/ConsultasReinf/ConsultaInformacoesConsolidadas");

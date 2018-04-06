@@ -16,7 +16,7 @@ import javax.net.ssl.TrustManagerFactory;
 import org.apache.log4j.Logger;
 
 public class SegurancaUtils {
-    
+
     public static final Logger LOGGER = Logger.getLogger(SegurancaUtils.class);
 
     private static SegurancaUtils instance;
@@ -36,19 +36,23 @@ public class SegurancaUtils {
 
     private String pastaLogs;
 
-    public static SegurancaUtils get() throws Exception {
+    public static SegurancaUtils get() {
         if (instance == null) {
             instance = new SegurancaUtils();
         }
         return instance;
     }
 
-    public SegurancaUtils() throws Exception {
+    public SegurancaUtils() {
         LOGGER.info("Lendo configuracoes.properties...");
-        
+
         Properties props = new Properties();
-        props.load(new FileInputStream("configuracoes.properties"));
-        
+        try {
+            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("configuracoes.properties"));
+        } catch (IOException e) {
+            LOGGER.error("Nao foi possivel ler configuracoes.properties!", e);
+        }
+
         urlServicoReinf = props.getProperty("efdreinf.urlServicoReinf");
 
         clientPfx = props.getProperty("efdreinf.clientPfx");
@@ -73,9 +77,9 @@ public class SegurancaUtils {
         if (sslSocketFactory != null) {
             return;
         }
-        
+
         LOGGER.info("Inicializando certificados digitais...");
-        
+
         if (clientPfx == null || clientAlias == null || clientPassword == null) {
             throw new UnsupportedOperationException("Dados do certificado digital nao informados!");
         }
@@ -86,23 +90,33 @@ public class SegurancaUtils {
         keyStore = KeyStore.getInstance("PKCS12");
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
+        LOGGER.info("Certificado cliente: " + clientPfx);
+
+        FileInputStream fileInputStream = new FileInputStream(clientPfx);
+
         try {
-            LOGGER.info("Certificado cliente: " + clientPfx);
-            keyStore.load(new FileInputStream(clientPfx), senha);
+            keyStore.load(fileInputStream, senha);
+            // testando id e senha
+            if (keyStore.getEntry(clientAlias, new KeyStore.PasswordProtection(senha)) == null) {
+                throw new IllegalArgumentException("ID do Certificado Digital incorreto!");
+            }
             kmf.init(keyStore, senha);
-        } catch (IOException e) {
-            throw new Exception("Senha do Certificado Digital incorreta ou Certificado inválido.");
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Senha do Certificado Digital incorreta ou Certificado invalido!", e);
         }
 
         KeyStore trustStore = KeyStore.getInstance("JKS");
         trustStore.load(null, null);
 
-        File[] arquivosCerts = new File("cacerts").listFiles();
-
-        for (int i = 0; i < arquivosCerts.length; i++) {
-            File file = arquivosCerts[i];
-            LOGGER.info("Certificado servidor: " + file.getName());
-            trustStore.setCertificateEntry(String.valueOf(i), cf.generateCertificate(new FileInputStream(file)));
+        try {
+            File[] arquivosCerts = new File("cacerts").listFiles();
+            for (int i = 0; i < arquivosCerts.length; i++) {
+                File file = arquivosCerts[i];
+                LOGGER.info("Certificado servidor: " + file.getName());
+                trustStore.setCertificateEntry(String.valueOf(i), cf.generateCertificate(new FileInputStream(file)));
+            }
+        } catch (Exception e) {
+            throw new Exception("Problema na leitura dos certificados de servidor (pasta cacerts)!", e);
         }
 
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
@@ -114,10 +128,10 @@ public class SegurancaUtils {
         sslSocketFactory = sslContext.getSocketFactory();
     }
 
-    public KeyStore getKeyStore() throws Exception {
+    public KeyStore getKeyStore() {
         return keyStore;
     }
-    
+
     public String getUrlServicoReinf() {
         return urlServicoReinf;
     }
@@ -181,9 +195,21 @@ public class SegurancaUtils {
     public void setServicoErp(String string) {
         this.urlServicoErp = string;
     }
-    
+
     public void setUrlServicoReinf(String urlServicoReinf) {
         this.urlServicoReinf = urlServicoReinf;
+    }
+
+    public void setModoIntegracao(String modoIntegracao) {
+        this.modoIntegracao = modoIntegracao;
+    }
+
+    public void setPastaEnvioEventos(String pastaEnvioEventos) {
+        this.pastaEnvioEventos = pastaEnvioEventos;
+    }
+
+    public void setPastaLogs(String pastaLogs) {
+        this.pastaLogs = pastaLogs;
     }
 
 }

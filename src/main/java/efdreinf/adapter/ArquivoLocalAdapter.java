@@ -3,6 +3,7 @@ package efdreinf.adapter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -24,13 +25,13 @@ public class ArquivoLocalAdapter implements IBackendAdapter {
         this.pastaDestino = pastaDestino;
     }
 
-    public ArquivoLocalAdapter() throws Exception {
+    public ArquivoLocalAdapter() {
         this.pastaOrigem = SegurancaUtils.get().getPastaEnvioEventos();
         this.pastaDestino = SegurancaUtils.get().getPastaLogs();
     }
 
     @Override
-    public List<String> consultarListaIds() {
+    public List<String> consultarListaIds() throws Exception {
         LOGGER.info("Buscando arquivos XML na pasta " + pastaOrigem);
         File[] arquivosEventos = new File(pastaOrigem).listFiles(new FileFilter() {
             @Override
@@ -38,6 +39,10 @@ public class ArquivoLocalAdapter implements IBackendAdapter {
                 return f.getName().endsWith(".xml");
             }
         });
+
+        if (arquivosEventos == null) {
+            throw new FileNotFoundException("Pasta nao encontrada: " + pastaOrigem);
+        }
 
         List<String> ids = new ArrayList<>();
         for (File file : arquivosEventos) {
@@ -51,9 +56,9 @@ public class ArquivoLocalAdapter implements IBackendAdapter {
 
     @Override
     public InputStream obterArquivo(String id) throws Exception {
-        File file = new File(pastaOrigem + "/" + id + ".xml");
-        LOGGER.info("Lendo arquivo: " + file.getName());
-        FileInputStream fileInputStream = new FileInputStream(file);
+        String filename = pastaOrigem + "/" + id + ".xml";
+        LOGGER.info("Lendo arquivo: " + filename);
+        FileInputStream fileInputStream = new FileInputStream(filename);
         return fileInputStream;
     }
 

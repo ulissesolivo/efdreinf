@@ -9,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -23,58 +24,69 @@ public class ServidorErpAdapter implements IBackendAdapter {
     @Override
     public List<String> consultarListaIds() throws Exception {
         LOGGER.info("Obtendo lista IDs do ERP...");
-        String listaEventos = getRespostaHttp(SegurancaUtils.get().getUrlServicoErp(), "L", "");
-        String[] split = //
-                listaEventos.substring(listaEventos.indexOf("["), listaEventos.indexOf("]")) //
-                .replaceAll("[^A-Z\\d,]", "") //
-                .split(",");
-        return Arrays.asList(split);
+        String url = getUrlServicoErp("L", "1");
+        String listaEventos = getRespostaHttp(url);
+        String jsontratado = listaEventos.substring(listaEventos.indexOf("["), listaEventos.indexOf("]")) //
+                .replaceAll("[^A-Z\\d,]", "");
+        if (jsontratado.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(jsontratado.split(","));
     }
 
     @Override
     public InputStream obterArquivo(String id) throws Exception {
         LOGGER.info("Baixando arquivo do ERP: " + id);
-        String url = SegurancaUtils.get().getUrlServicoErp() + "&op=C&id=" + id;
-        String arquivo = getRespostaHttp(url, "C", id);
+        String url = getUrlServicoErp("C", id);
+        String arquivo = getRespostaHttp(url);
         return InputStreamUtils.stringToInputStream(arquivo);
     }
 
     @Override
     public void guardarStatusRetorno(String id, String retorno) throws Exception {
         LOGGER.info("Gravando arquivo no ERP: " + id);
-        
-        HttpURLConnection connection = abreConexao(SegurancaUtils.get().getUrlServicoErp());
+        String url = getUrlServicoErp("A", id);
 
-        connection.setDoOutput(true);
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "text/xml; charset=utf-8");
-        connection.setRequestProperty("op", "A");
-        connection.setRequestProperty("id", id);
+        try {
+            HttpURLConnection connection = abreConexao(url);
 
-        OutputStream outputStream = connection.getOutputStream();
+            connection.setDoOutput(true);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "text/xml; charset=utf-8");
 
-        BufferedOutputStream out = new BufferedOutputStream(outputStream);
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+            OutputStream outputStream = connection.getOutputStream();
 
-        writer.append(retorno);
+            BufferedOutputStream out = new BufferedOutputStream(outputStream);
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
 
-        writer.flush();
-        writer.close();
-        out.close();
-        outputStream.close();
+            writer.append(retorno);
 
-        connection.disconnect();
+            writer.flush();
+            writer.close();
+            out.close();
+            outputStream.close();
+
+            InputStream respostaStream = connection.getInputStream();
+            respostaStream.close();
+
+            connection.disconnect();
+        } catch (Exception e) {
+            throw new Exception("Erro ao conectar servidor ERP " + url, e);
+        }
     }
 
-    protected String getRespostaHttp(String url, String op, String id) throws Exception {
-        HttpURLConnection connection = abreConexao(url);
-        connection.setRequestMethod("GET");
-        InputStream respostaStream = connection.getInputStream();
-        String resposta = InputStreamUtils.inputStreamToString(respostaStream);
-        respostaStream.close();
-        connection.disconnect();
-        connection.setRequestProperty("op", op);
-        connection.setRequestProperty("id", id);
+    protected String getRespostaHttp(String url) throws Exception {
+        String resposta;
+        try {
+            HttpURLConnection connection = abreConexao(url);
+            connection.setRequestMethod("GET");
+            InputStream respostaStream = connection.getInputStream();
+            resposta = InputStreamUtils.inputStreamToString(respostaStream);
+            respostaStream.close();
+            connection.disconnect();
+        } catch (Exception e) {
+            throw new Exception("Erro ao conectar servidor ERP " + url, e);
+        }
         return resposta;
     }
 
@@ -85,6 +97,21 @@ public class ServidorErpAdapter implements IBackendAdapter {
         String authLogin = "Basic " + new String(Base64.getEncoder().encode(login));
         connection.setRequestProperty("Authorization", authLogin);
         return connection;
+    }
+
+    private String getUrlServicoErp(String op, String id) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(SegurancaUtils.get().getUrlServicoErp());
+        if (SegurancaUtils.get().getUrlServicoErp().contains("?")) {
+            sb.append("&");
+        } else {
+            sb.append("?");
+        }
+        sb.append("op=");
+        sb.append(op);
+        sb.append("&id=");
+        sb.append(id);
+        return sb.toString();
     }
 
 }

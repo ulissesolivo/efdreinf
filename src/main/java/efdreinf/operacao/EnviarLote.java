@@ -24,14 +24,14 @@ public class EnviarLote implements IOperacao {
         for (String id : listaIds) {
 
             InputStream arquivo = backend.obterArquivo(id);
+            
+            if (arquivo.available() == 0) {
+                continue;
+            }
 
             String mensagem = montarMensagem(arquivo);
 
-            destino.enviar(mensagem);
-
-            String resposta = destino.lerResposta();
-
-            destino.desconectar();
+            String resposta = destino.enviar(mensagem);
 
             backend.guardarStatusRetorno(id, resposta);
 
@@ -39,7 +39,7 @@ public class EnviarLote implements IOperacao {
 
     }
 
-    public String montarMensagem(InputStream arquivo) throws Exception {
+    protected String montarMensagem(InputStream arquivo) throws Exception {
 
         StringBuilder sb = new StringBuilder();
 

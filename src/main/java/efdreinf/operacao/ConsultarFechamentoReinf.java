@@ -10,13 +10,9 @@ public class ConsultarFechamentoReinf implements IOperacao {
 
         String mensagem = montarMensagem(entrada);
 
-        destino.enviar(mensagem);
-
-        String resposta = destino.lerResposta();
+        String resposta = destino.enviar(mensagem);
 
         entrada.guardarStatusRetorno("", resposta);
-
-        destino.desconectar();
     }
 
     public static String montarMensagem(IBackendAdapter entrada) throws Exception {

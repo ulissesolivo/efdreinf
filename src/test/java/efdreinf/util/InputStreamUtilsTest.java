@@ -11,9 +11,9 @@ public class InputStreamUtilsTest {
 
     @Test
     public void inputStreamToStringTest() throws Exception {
-        InputStream inputStream = InputStreamUtils.stringToInputStream("<olá-teste Marcos!/>");
+        InputStream inputStream = InputStreamUtils.stringToInputStream("<ola-teste Marcos!/>");
         String outraString = InputStreamUtils.inputStreamToString(inputStream);
-        Assert.assertEquals("<olá-teste Marcos!/>", outraString);
+        Assert.assertEquals("<ola-teste Marcos!/>", outraString);
     }
 
 }
